@@ -11,6 +11,7 @@ import os
 
 def Primeiro():
     from src.desenha_grafo import draw_graph
+    
     # instancia I de B' ou grafo
     I = {
         'A': ['B', 'C'],
@@ -63,7 +64,7 @@ def Segundo():
 
 
 
-    I = "(A v B v ¬C) ∧ (¬A v ¬B v C) ∧ (A v ¬B v C)"
+    I = "(A v B v Z) ∧ (X v Y v C) ∧ (A v Y v C)"
 
     grafo, S = f(I)
 
