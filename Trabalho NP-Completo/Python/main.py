@@ -64,7 +64,7 @@ def Segundo():
 
 
 
-    I = "(A v B v Z) ∧ (X v Y v C) ∧ (A v Y v C)"
+    I = "(-x v y v -z) ∧ (x v -y v z) ∧ (x v y v z) ∧ (-x v -y)"
 
     grafo, S = f(I)
 
