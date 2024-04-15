@@ -123,6 +123,80 @@ struct Graph* reduction(char* clauses[], int numClauses) {
     return graph;
 }
 
+// Função para realizar a busca exaustiva para encontrar o maior conjunto independente em um grafo
+int* exhaustiveSearch(struct Graph* graph, int* maxSize) {
+    // Inicializa o conjunto independente máximo e seu tamanho
+    int* maxSet = (int*)malloc(sizeof(int) * MAX_VERTICES);
+    *maxSize = 0;
+
+    // Para cada vértice no grafo
+    for (int i = 0; i < graph->numVertices; ++i) {
+        // Inicializa o conjunto atual com o vértice i
+        int currentSet[MAX_VERTICES];
+        int setSize = 1;
+        currentSet[0] = i;
+
+        // Inicializa a lista de candidatos com todos os vértices, exceto o vértice i
+        bool candidates[MAX_VERTICES] = {false};
+        for (int j = 0; j < graph->numVertices; ++j) {
+            if (j != i) {
+                candidates[j] = true;
+            }
+        }
+
+        // Enquanto houver candidatos
+        while (true) {
+            int v = -1;
+            // Encontra um candidato
+            for (int j = 0; j < graph->numVertices; ++j) {
+                if (candidates[j]) {
+                    v = j;
+                    break;
+                }
+            }
+
+            // Se não houver mais candidatos, o conjunto atual é máximo
+            if (v == -1) {
+                break;
+            }
+
+            // Verifica se o vértice v é adjacente a todos os vértices no conjunto atual
+            bool isIndependent = true;
+            for (int j = 0; j < setSize; ++j) {
+                struct Node* current = graph->adjLists[currentSet[j]]->head;
+                bool found = false;
+                while (current != NULL) {
+                    if (current->data == v) {
+                        found = true;
+                        break;
+                    }
+                    current = current->next;
+                }
+                if (found) {
+                    isIndependent = false;
+                    break;
+                }
+            }
+
+            // Se o vértice v for independente, adiciona-o ao conjunto atual
+            if (isIndependent) {
+                currentSet[setSize++] = v;
+            }
+
+            // Remove o vértice v da lista de candidatos
+            candidates[v] = false;
+        }
+
+        // Se o conjunto atual for maior que o conjunto máximo conhecido até agora, atualize-o
+        if (setSize > *maxSize) {
+            *maxSize = setSize;
+            memcpy(maxSet, currentSet, sizeof(int) * setSize);
+        }
+    }
+
+    return maxSet;
+}
+
 void writeGraphToFile(struct Graph* graph, const char* filename) {
     FILE* file = fopen(filename, "w");
     if (file == NULL) {
@@ -145,6 +219,35 @@ void writeGraphToFile(struct Graph* graph, const char* filename) {
     fclose(file);
 }
 
+void writeGraphToFile2(struct Graph* graph, int *ind, int indSize, const char* filename) {
+    FILE* file = fopen(filename, "w");
+    if (file == NULL) {
+        printf("Erro ao abrir o arquivo para escrita.\n");
+        return;
+    }
+
+    fprintf(file, "%d\n", graph->numVertices);
+
+    // Escreve as arestas do grafo
+    for (int i = 0; i < graph->numVertices; ++i) {
+        fprintf(file, "%d:", i);
+        struct Node* current = graph->adjLists[i]->head;
+        while (current != NULL) {
+            fprintf(file, " %d", current->data);
+            current = current->next;
+        }
+        fprintf(file, "\n");
+    }
+
+    // Escreve o conjunto independente
+    fprintf(file, "%d\n", indSize);
+    for (int i = 0; i < indSize; ++i) {
+        fprintf(file, "%d ", ind[i]);
+    }
+    fprintf(file, "\n");
+
+    fclose(file);
+}
 
 
 int Primeiro() {
@@ -252,8 +355,6 @@ int main() {
     // Realiza a redução da instância do problema A' para B'
     struct Graph* graph = reduction(clauses, numClauses);
 
-    writeGraphToFile(graph, "grafo.txt");
-
     // Exibe o grafo resultante
     printf("Grafo resultante:\n");
     printf("Número de vértices: %d\n", graph->numVertices);
@@ -268,6 +369,19 @@ int main() {
         printf("\n");
     }
 
+    int maxSize;
+    int *maxIndependentSet = exhaustiveSearch(graph, &maxSize);
+
+    writeGraphToFile(graph, "grafo.txt");
+    writeGraphToFile2(graph, maxIndependentSet, maxSize,"grafo.txt");
+
+     // Exibe o conjunto independente máximo
+    printf("Conjunto Independente Máximo:\n");
+    for (int i = 0; i < maxSize; ++i) {
+        printf("%d ", maxIndependentSet[i]);
+    }
+    printf("\nTamanho do Conjunto Independente Máximo: %d\n", maxSize);
+
     // Libera a memória alocada para o grafo
     for (int i = 0; i < graph->numVertices; ++i) {
         struct Node* current = graph->adjLists[i]->head;
@@ -279,6 +393,7 @@ int main() {
         free(graph->adjLists[i]);
     }
     free(graph);
+    free(maxIndependentSet);
 
     return 0;
 }
