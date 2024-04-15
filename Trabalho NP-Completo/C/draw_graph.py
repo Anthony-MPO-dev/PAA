@@ -19,11 +19,22 @@ def draw_graph(adjacency_list):
         G.add_node(vertex)
         for neighbor in neighbors:
             G.add_edge(vertex, neighbor)
-    nx.draw(G, with_labels=True, node_size=700)
+    pos = nx.circular_layout(G)
+     # Desenha os vértices
+    nx.draw_networkx_nodes(G, pos, node_size=700)
+    # Desenha as arestas
+    nx.draw_networkx_edges(G, pos)
+    # Desenha as etiquetas dos vértices
+    nx.draw_networkx_labels(G, pos)
+
+    # Destaca o conjunto independente em vermelho
+    # nx.draw_networkx_nodes(G, pos, nodelist=independent_set, node_color='r', node_size=700)
+
+    # nx.draw(G, with_labels=True, node_size=700)
     plt.title('Grafo')
     plt.axis('off')
     plt.show()
 
 if __name__ == "__main__":
-    adjacency_list = read_graph("graph.txt")
+    adjacency_list = read_graph("grafo.txt")
     draw_graph(adjacency_list)

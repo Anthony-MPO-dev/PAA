@@ -1,31 +1,18 @@
 CC = gcc
-CFLAGS = -Wall -Wextra
 
-all: main 3CNFSAT A_to_B independente_set_from_A
+all: main 3CNFSAT A_to_B B_to_A
 
-independente_set_from_A: independente_set_from_A.o
-	$(CC) $(CFLAGS) independente_set_from_A.o -o indep_a
+B_to_A: B_to_A.c
+	$(CC) B_to_A.c -o B_to_A
 
-independente_set_from_A.o: independente_set_from_A.c
-	$(CC) $(CFLAGS) -c independente_set_from_A.c
+A_to_B: A_to_B.c
+	$(CC) A_to_B.c -o A_to_B
 
-A_to_B: A_to_B.o
-	$(CC) $(CFLAGS) A_to_B.o -o a_b
+3CNFSAT: 3CNFSAT.c
+	$(CC) 3CNFSAT.c -o 3CNFSAT
 
-A_to_B.o: A_to_B.c
-	$(CC) $(CFLAGS) -c A_to_B.c
-
-3CNFSAT: 3CNFSAT.o
-	$(CC) $(CFLAGS) 3CNFSAT.o -o sat
-
-3CNFSAT.o: 3CNFSAT.c
-	$(CC) $(CFLAGS) -c 3CNFSAT.c
-
-main: main.o
-	$(CC) $(CFLAGS) main.o -o main
-
-main.o: main.c
-	$(CC) $(CFLAGS) -c main.c
+main: main.c
+	$(CC) main.c -o main
 
 clean:
-	rm -rf *.o main
+	rm -rf *.o main A_to_B B_to_A 3CNFSAT

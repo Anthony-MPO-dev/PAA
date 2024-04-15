@@ -4,6 +4,7 @@
 #include <string.h>
 
 #define MAX_VERTICES 100
+#define MAX_LITERALS 3
 
 // Estrutura para representar um nó de uma lista encadeada
 struct Node {
@@ -57,7 +58,7 @@ void addEdge(struct Graph* graph, int src, int dest) {
     graph->adjLists[dest]->head = newNode;
 }
 
-// Função para verificar se um conjunto de vértices é um conjunto independente
+// Função para verificar se um conjunto de vértices é um conjunto independente C(I, S)
 bool isIndependentSet(struct Graph* graph, int vertices[], int size) {
     // Verifica se cada vértice no conjunto não é adjacente a nenhum outro vértice no conjunto
     for (int i = 0; i < size; ++i) {
@@ -73,6 +74,78 @@ bool isIndependentSet(struct Graph* graph, int vertices[], int size) {
     }
     return true; // Nenhum par de vértices no conjunto é adjacente
 }
+
+// Função para realizar a redução da instância do problema A' para B'
+struct Graph* reduction(char* clauses[], int numClauses) {
+    int totalVertices = 0;
+
+    // Calcula o número total de vértices
+    for (int i = 0; i < numClauses; ++i) {
+        totalVertices += strlen(clauses[i]);
+    }
+
+    // Cria um grafo com número de vértices igual ao número total de literais
+    struct Graph* graph = createGraph(totalVertices);
+
+    int vertexIndex = 0;
+
+    // Adiciona as arestas correspondentes para cada cláusula
+    for (int i = 0; i < numClauses; ++i) {
+        // Adiciona as arestas entre os vértices da cláusula
+        for (int j = 0; j < strlen(clauses[i]); ++j) {
+            int literalIndex = vertexIndex + j; // Índice do literal no grafo
+            for (int k = j + 1; k < strlen(clauses[i]); ++k) {
+                int otherLiteralIndex = vertexIndex + k; // Índice do outro literal no grafo
+                addEdge(graph, literalIndex, otherLiteralIndex); // Adiciona uma aresta entre os literais na mesma cláusula
+            }
+        }
+        vertexIndex += strlen(clauses[i]); // Atualiza o índice para o próximo conjunto de vértices
+    }
+
+    // Adiciona arestas adicionais entre vértices que representam literais opostos
+    for (int i = 0; i < numClauses; ++i) {
+        int clauseOffset_i = i * MAX_LITERALS; // Deslocamento para o início dos vértices da cláusula i
+        for (int j = i + 1; j < numClauses; ++j) {
+            int clauseOffset_j = j * MAX_LITERALS; // Deslocamento para o início dos vértices da cláusula j
+            for (int k = 0; k < strlen(clauses[i]); ++k) {
+                int literalIndex_i = clauseOffset_i + k; // Índice do literal na cláusula i
+                for (int l = 0; l < strlen(clauses[j]); ++l) {
+                    int literalIndex_j = clauseOffset_j + l; // Índice do literal na cláusula j
+                    // Verifica se os literais são opostos
+                    if (clauses[i][k] != clauses[j][l] && (clauses[i][k] == clauses[j][l] + 32 || clauses[i][k] == clauses[j][l] - 32)) {
+                        addEdge(graph, literalIndex_i, literalIndex_j); // Adiciona uma aresta entre os literais opostos
+                    }
+                }
+            }
+        }
+    }
+
+    return graph;
+}
+
+void writeGraphToFile(struct Graph* graph, const char* filename) {
+    FILE* file = fopen(filename, "w");
+    if (file == NULL) {
+        printf("Erro ao abrir o arquivo para escrita.\n");
+        return;
+    }
+
+    fprintf(file, "%d\n", graph->numVertices);
+
+    for (int i = 0; i < graph->numVertices; ++i) {
+        fprintf(file, "%d:", i);
+        struct Node* current = graph->adjLists[i]->head;
+        while (current != NULL) {
+            fprintf(file, " %d", current->data);
+            current = current->next;
+        }
+        fprintf(file, "\n");
+    }
+
+    fclose(file);
+}
+
+
 
 int Primeiro() {
     int numVertices;
@@ -157,7 +230,6 @@ int Primeiro() {
         int independentSet[] = {0, 3, 4};
         int setSize = sizeof(independentSet) / sizeof(independentSet[0]);
 
-
         // Verificando se o conjunto é um conjunto independente
         if (isIndependentSet(graph, independentSet, setSize)) {       // AQUI SERIA NOSSA FUNCAO 'C'
             printf("O conjunto dado é um conjunto independente.\n");
@@ -174,11 +246,50 @@ int Primeiro() {
 }
 
 int main() {
-    printf("========================================\n");
-    printf("========EXECUCAO PRIMEIRO PASSO=========\n");
-    if (Primeiro() == 0)  {
-        printf("\nCodigo Executado com Sucesso!\n");
-    } else {
-        printf("\nErro na funcao Primeiro!\n");
+    char* clauses[] = {"aBc", "AbC", "ABC", "ab"};
+    int numClauses = sizeof(clauses) / sizeof(clauses[0]);
+
+    // Realiza a redução da instância do problema A' para B'
+    struct Graph* graph = reduction(clauses, numClauses);
+
+    writeGraphToFile(graph, "grafo.txt");
+
+    // Exibe o grafo resultante
+    printf("Grafo resultante:\n");
+    printf("Número de vértices: %d\n", graph->numVertices);
+    printf("Arestas:\n");
+    for (int i = 0; i < graph->numVertices; ++i) {
+        printf("Vértice %d:", i);
+        struct Node* current = graph->adjLists[i]->head;
+        while (current != NULL) {
+            printf(" %d", current->data);
+            current = current->next;
+        }
+        printf("\n");
     }
+
+    // Libera a memória alocada para o grafo
+    for (int i = 0; i < graph->numVertices; ++i) {
+        struct Node* current = graph->adjLists[i]->head;
+        while (current != NULL) {
+            struct Node* temp = current;
+            current = current->next;
+            free(temp);
+        }
+        free(graph->adjLists[i]);
+    }
+    free(graph);
+
+    return 0;
 }
+
+
+// int main() {
+//     printf("========================================\n");
+//     printf("========EXECUCAO PRIMEIRO PASSO=========\n");
+//     if (Primeiro() == 0)  {
+//         printf("\nCodigo Executado com Sucesso!\n");
+//     } else {
+//         printf("\nErro na funcao Primeiro!\n");
+//     }
+// }

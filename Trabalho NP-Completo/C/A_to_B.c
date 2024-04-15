@@ -73,7 +73,7 @@ void saveGraph(struct Graph* graph, const char* filename) {
 }
 
 int main() {
-    char* clauses[] = {"ABZ", "XYC", "AYC"};
+    char* clauses[] = {"aBc", "AbC", "ABC", "ab"};
     int numClauses = sizeof(clauses) / sizeof(clauses[0]);
     int numVertices = 0;
     struct LiteralVertex literals[MAX_CLAUSES * MAX_LITERALS];

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #define MAX_CLAUSES 100
 #define MAX_LITERALS 3
@@ -52,16 +53,57 @@ void parseInstance(char* instanceStr, char* clauses[], int* numClauses) {
     }
 }
 
+// Função para verificar se uma solução satisfaz as cláusulas
+bool testSolution(char* clauses[], int numClauses, bool solution[]) {
+    // Para cada cláusula
+    for (int i = 0; i < numClauses; i++) {
+        bool clauseSatisfied = false;
+        // Para cada literal na cláusula
+        char* token = clauses[i];
+        while (*token != '\0') { // Alteração feita aqui
+            char literal = *token;
+            bool isNegated = (literal >= 'a' && literal <= 'z'); // Verifica se é negado
+            char variable = (isNegated) ? (literal - ('a' - 'A')) : literal; // Pega a variável
+            // Se o literal estiver negado, inverte o valor da variável
+            bool value = (isNegated) ? !solution[variable - 'A'] : solution[variable - 'A'];
+            
+            // Verifica se o valor da variável satisfaz a cláusula
+            if (value) {
+                clauseSatisfied = true;
+                break;
+            }
+            token++;
+        }
+        // Se nenhuma das variáveis na cláusula for satisfeita, retorne falso
+        if (!clauseSatisfied) {
+            return false;
+        }
+    }
+    // Se todas as cláusulas forem satisfeitas, retorne verdadeiro
+    return true;
+}
+
 int main() {
     int numClauses;
-    char instanceStr[] = "(A v B v Z) ∧ (X v Y v C) ∧ (A v Y v C)";
+    char instanceStr[] = "(A v B v c) ∧ (a v B v C)";
     char* clauses[MAX_CLAUSES];
 
+    // Parse da instância
     parseInstance(instanceStr, clauses, &numClauses);
 
-    printf("Claúsulas separadas:\n");
+    // Atribuição de valores às variáveis (true = 1, false = 0)
+    bool solution[26] = {0, 0, 0}; // A=false, B=false, C=false
+
+    // Testa a solução
+    if (testSolution(clauses, numClauses, solution)) {
+        printf("A solução é válida para as cláusulas fornecidas.\n");
+    } else {
+        printf("A solução não é válida para as cláusulas fornecidas.\n");
+    }
+
+    // Liberar memória alocada para as cláusulas
     for (int i = 0; i < numClauses; i++) {
-        printf("Cláusula %d: %s\n", i + 1, clauses[i]);
+        free(clauses[i]);
     }
 
     return 0;
