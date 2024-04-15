@@ -77,39 +77,39 @@ bool isIndependentSet(struct Graph* graph, int vertices[], int size) {
 
 // Função para realizar a redução da instância do problema A' para B'
 struct Graph* reduction(char* clauses[], int numClauses) {
-    int totalVertices = 0;
+    int totalVertices = 0; // ! COMPLEXIDADE = O(1)
 
-    // Calcula o número total de vértices
-    for (int i = 0; i < numClauses; ++i) {
-        totalVertices += strlen(clauses[i]);
+    // Calcula o número total de vértices 
+    for (int i = 0; i < numClauses; ++i) { // ! COMPLEXIDADE =  O(numClauses)
+        totalVertices += strlen(clauses[i]); // ! COMPLEXIDADE = O(1)
     }
 
-    // Cria um grafo com número de vértices igual ao número total de literais
-    struct Graph* graph = createGraph(totalVertices);
+    // Cria um grafo com número de vértices igual ao número total de literais  
+    struct Graph* graph = createGraph(totalVertices);// ! COMPLEXIDADE O(1)
 
-    int vertexIndex = 0;
+    int vertexIndex = 0; // ! COMPLEXIDADE = O(1)
 
     // Adiciona as arestas correspondentes para cada cláusula
-    for (int i = 0; i < numClauses; ++i) {
+    for (int i = 0; i < numClauses; ++i) { // ! COMPLEXIDADE = O(1)
         // Adiciona as arestas entre os vértices da cláusula
-        for (int j = 0; j < strlen(clauses[i]); ++j) {
-            int literalIndex = vertexIndex + j; // Índice do literal no grafo
-            for (int k = j + 1; k < strlen(clauses[i]); ++k) {
-                int otherLiteralIndex = vertexIndex + k; // Índice do outro literal no grafo
-                addEdge(graph, literalIndex, otherLiteralIndex); // Adiciona uma aresta entre os literais na mesma cláusula
+        for (int j = 0; j < strlen(clauses[i]); ++j) { // ! COMPLEXIDADE = O(numClauses)   m == numero de vertices na clausula
+            int literalIndex = vertexIndex + j; // Índice do literal no grafo // ! COMPLEXIDADE = O(numClauses*m)
+            for (int k = j + 1; k < strlen(clauses[i]); ++k) { // ! COMPLEXIDADE = O(numClauses)
+                int otherLiteralIndex = vertexIndex + k; // Índice do outro literal no grafo // ! O(numClauses*(m-1)²)
+                addEdge(graph, literalIndex, otherLiteralIndex); // Adiciona uma aresta entre os literais na mesma cláusula // ! COMPLEXIDADE = O(1)
             }
         }
-        vertexIndex += strlen(clauses[i]); // Atualiza o índice para o próximo conjunto de vértices
+        vertexIndex += strlen(clauses[i]); // Atualiza o índice para o próximo conjunto de vértices // ! COMPLEXIDADE = O(numClauses)
     }
 
     // Adiciona arestas adicionais entre vértices que representam literais opostos
-    for (int i = 0; i < numClauses; ++i) {
+    for (int i = 0; i < numClauses; ++i) { // ! COMPLEXIDADE = O(numClauses)
         int clauseOffset_i = i * MAX_LITERALS; // Deslocamento para o início dos vértices da cláusula i
-        for (int j = i + 1; j < numClauses; ++j) {
+        for (int j = i + 1; j < numClauses; ++j) { // ! COMPLEXIDADE = O(numClauses^2)
             int clauseOffset_j = j * MAX_LITERALS; // Deslocamento para o início dos vértices da cláusula j
-            for (int k = 0; k < strlen(clauses[i]); ++k) {
+            for (int k = 0; k < strlen(clauses[i]); ++k) {  // ! COMPLEXIDADE = O(numClauses² * m)
                 int literalIndex_i = clauseOffset_i + k; // Índice do literal na cláusula i
-                for (int l = 0; l < strlen(clauses[j]); ++l) {
+                for (int l = 0; l < strlen(clauses[j]); ++l) {  // ! COMPLEXIDADE = O(numClauses² * m²)
                     int literalIndex_j = clauseOffset_j + l; // Índice do literal na cláusula j
                     // Verifica se os literais são opostos
                     if (clauses[i][k] != clauses[j][l] && (clauses[i][k] == clauses[j][l] + 32 || clauses[i][k] == clauses[j][l] - 32)) {
@@ -120,35 +120,48 @@ struct Graph* reduction(char* clauses[], int numClauses) {
         }
     }
 
-    return graph;
+    return graph; 
+    /*
+        ! Complexidade FINAL: 
+        * O(1)+O(numClauses)+
+        * O(numClauses∗m)+
+        * O(numClauses∗(m−1)²)+
+        * O(1)+O(numClauses)+
+        * O(numClauses}²)+
+        * O(numClauses²∗m)+
+        * O(numClauses²∗m²)  
+        
+        ! Resultado == O(numClauses²∗m²) == O(n²*m²)
+        
+        * */ 
 }
 
 // Função para realizar a busca exaustiva para encontrar o maior conjunto independente em um grafo
 int* exhaustiveSearch(struct Graph* graph, int* maxSize) {
     // Inicializa o conjunto independente máximo e seu tamanho
-    int* maxSet = (int*)malloc(sizeof(int) * MAX_VERTICES);
-    *maxSize = 0;
+    int* maxSet = (int*)malloc(sizeof(int) * MAX_VERTICES); // ! COMPLEXIDADE O(1)
+    *maxSize = 0;                                           // ! COMPLEXIDADE O(1)
 
     // Para cada vértice no grafo
-    for (int i = 0; i < graph->numVertices; ++i) {
-        // Inicializa o conjunto atual com o vértice i
+    for (int i = 0; i < graph->numVertices; ++i) {          // ! COMPLEXIDADE O(1)
+        // Inicializa o conjunto atual com o vértice i      // ! COMPLEXIDADE O(numVertices)
         int currentSet[MAX_VERTICES];
         int setSize = 1;
         currentSet[0] = i;
 
         // Inicializa a lista de candidatos com todos os vértices, exceto o vértice i
         bool candidates[MAX_VERTICES] = {false};
-        for (int j = 0; j < graph->numVertices; ++j) {
-            if (j != i) {
+        for (int j = 0; j < graph->numVertices; ++j) { 
+            if (j != i) {                                   // ! COMPLEXIDADE O(numVertices^2)
                 candidates[j] = true;
             }
         }
 
         // Enquanto houver candidatos
-        while (true) {
-            int v = -1;
+        while (true) {                       // ! Complexidade: indefinida   
+            int v = -1;         // ! COMPLEXIDADE O(1)
             // Encontra um candidato
-            for (int j = 0; j < graph->numVertices; ++j) {
+            for (int j = 0; j < graph->numVertices; ++j) { // ! COMPLEXIDADE O(numVertices) 
                 if (candidates[j]) {
                     v = j;
                     break;
@@ -156,46 +169,49 @@ int* exhaustiveSearch(struct Graph* graph, int* maxSize) {
             }
 
             // Se não houver mais candidatos, o conjunto atual é máximo
-            if (v == -1) {
+            if (v == -1) { // ! COMPLEXIDADE O(numVertices)
                 break;
             }
 
             // Verifica se o vértice v é adjacente a todos os vértices no conjunto atual
             bool isIndependent = true;
-            for (int j = 0; j < setSize; ++j) {
+            for (int j = 0; j < setSize; ++j) { //!  Complexidade: O(numVertices * setSize)
                 struct Node* current = graph->adjLists[currentSet[j]]->head;
                 bool found = false;
-                while (current != NULL) {
-                    if (current->data == v) {
+                while (current != NULL) { 
+                    if (current->data == v) {  //!  Complexidade: O(numVertices * (g*setSize))  g = Grau do vertice atual
                         found = true;
                         break;
                     }
-                    current = current->next;
+                    current = current->next;  //!  Complexidade: O((numVertices * (g*setSize)-1))
                 }
-                if (found) {
+
+                if (found) { //!  Complexidade: O(numVertices*setSize)
                     isIndependent = false;
                     break;
                 }
             }
 
             // Se o vértice v for independente, adiciona-o ao conjunto atual
-            if (isIndependent) {
+            if (isIndependent) {  //!  Complexidade: O(numVertices)
                 currentSet[setSize++] = v;
             }
 
             // Remove o vértice v da lista de candidatos
-            candidates[v] = false;
+            candidates[v] = false; //!  Complexidade: O(numVertices)
         }
 
         // Se o conjunto atual for maior que o conjunto máximo conhecido até agora, atualize-o
-        if (setSize > *maxSize) {
+        if (setSize > *maxSize) { //!  Complexidade: O(numVertices)
             *maxSize = setSize;
             memcpy(maxSet, currentSet, sizeof(int) * setSize);
         }
     }
 
     return maxSet;
-}
+} /*
+    ! COMPLEXIDADE TOTAL == O(graph->numVertices^2 * (grau do vertice)) == O(n²*g)
+*/
 
 void writeGraphToFile(struct Graph* graph, const char* filename) {
     FILE* file = fopen(filename, "w");
@@ -252,40 +268,40 @@ void writeGraphToFile2(struct Graph* graph, int *ind, int indSize, const char* f
 // Função para converter um conjunto independente para uma lista de cláusulas do problema 3CNF-SAT
 void convertTo3CNF(int* independent_set, int num_sets, char* clauses[], int numClauses) {
     // Inicializa a string de resposta
-    char resp[30] = "";
+    char resp[30] = ""; // ! COMPLEXIDADE O(1)
 
     // Calcula o tamanho total da string resultante
-    int totalLength = 0;
-    for (int i = 0; i < numClauses; ++i) {
+    int totalLength = 0; // ! COMPLEXIDADE O(1)
+    for (int i = 0; i < numClauses; ++i) { // ! COMPLEXIDADE O(numClauses)
         totalLength += strlen(clauses[i]);
     }
 
     // Aloca memória para a string resultante, incluindo o caractere nulo final
-    char* concatenated = (char*)malloc((totalLength + 1) * sizeof(char));
-    if (concatenated == NULL) {
+    char* concatenated = (char*)malloc((totalLength + 1) * sizeof(char)); // ! COMPLEXIDADE O(1)
+    if (concatenated == NULL) { // ! COMPLEXIDADE O(1)
         printf("Erro ao alocar memória.\n");
         exit(1);
     }
 
     // Copia cada string individual para a string resultante
-    int currentIndex = 0;
-    for (int i = 0; i < numClauses; ++i) {
+    int currentIndex = 0; // ! COMPLEXIDADE O(1)
+    for (int i = 0; i < numClauses; ++i) { // ! COMPLEXIDADE O(numClauses)
         strcpy(concatenated + currentIndex, clauses[i]);
         currentIndex += strlen(clauses[i]);
     }
 
     // Adiciona o caractere nulo final
-    concatenated[currentIndex] = '\0';
-    printf("\n\n%s\n",concatenated);
+    concatenated[currentIndex] = '\0'; // ! COMPLEXIDADE O(numClauses)
+    printf("\n\n%s\n",concatenated); // ! COMPLEXIDADE O(numClauses)
 
-    for (int i = 0; i < num_sets; i++)
+    for (int i = 0; i < num_sets; i++)  // ! COMPLEXIDADE O(num_sets)
     {
         resp[i] = concatenated[independent_set[i]];
     }
 
-    printf("\nResposta para o 3CNF-SAT: %s\n",resp);
+    printf("\nResposta para o 3CNF-SAT: %s\n",resp);   
 
-}
+} //! COMPLEXIDADE TOTAL O(numClauses)+O(num_sets) == O(n)
 
 
 int Primeiro() {
