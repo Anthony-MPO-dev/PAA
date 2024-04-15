@@ -249,6 +249,44 @@ void writeGraphToFile2(struct Graph* graph, int *ind, int indSize, const char* f
     fclose(file);
 }
 
+// Função para converter um conjunto independente para uma lista de cláusulas do problema 3CNF-SAT
+void convertTo3CNF(int* independent_set, int num_sets, char* clauses[], int numClauses) {
+    // Inicializa a string de resposta
+    char resp[30] = "";
+
+    // Calcula o tamanho total da string resultante
+    int totalLength = 0;
+    for (int i = 0; i < numClauses; ++i) {
+        totalLength += strlen(clauses[i]);
+    }
+
+    // Aloca memória para a string resultante, incluindo o caractere nulo final
+    char* concatenated = (char*)malloc((totalLength + 1) * sizeof(char));
+    if (concatenated == NULL) {
+        printf("Erro ao alocar memória.\n");
+        exit(1);
+    }
+
+    // Copia cada string individual para a string resultante
+    int currentIndex = 0;
+    for (int i = 0; i < numClauses; ++i) {
+        strcpy(concatenated + currentIndex, clauses[i]);
+        currentIndex += strlen(clauses[i]);
+    }
+
+    // Adiciona o caractere nulo final
+    concatenated[currentIndex] = '\0';
+    printf("\n\n%s\n",concatenated);
+
+    for (int i = 0; i < num_sets; i++)
+    {
+        resp[i] = concatenated[independent_set[i]];
+    }
+
+    printf("\nResposta para o 3CNF-SAT: %s\n",resp);
+
+}
+
 
 int Primeiro() {
     int numVertices;
@@ -372,17 +410,17 @@ int main() {
     int maxSize;
     int *maxIndependentSet = exhaustiveSearch(graph, &maxSize);
 
-    writeGraphToFile(graph, "grafo.txt");
-    writeGraphToFile2(graph, maxIndependentSet, maxSize,"grafo.txt");
-
-     // Exibe o conjunto independente máximo
+    // Exibe o conjunto independente máximo
     printf("Conjunto Independente Máximo:\n");
     for (int i = 0; i < maxSize; ++i) {
         printf("%d ", maxIndependentSet[i]);
     }
     printf("\nTamanho do Conjunto Independente Máximo: %d\n", maxSize);
 
-    // Libera a memória alocada para o grafo
+    // Convertendo o conjunto independente encontrado para uma lista de cláusulas 3CNF-SAT
+    convertTo3CNF(maxIndependentSet, maxSize, clauses, numClauses);
+
+    // Libera a memória alocada para o grafo e para o conjunto independente máximo
     for (int i = 0; i < graph->numVertices; ++i) {
         struct Node* current = graph->adjLists[i]->head;
         while (current != NULL) {
